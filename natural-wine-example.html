@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Palate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sand:#EFE6DA; --sand-2:#E6DACB; --line:#D9CBB8;
+  --terracotta:#B5573A; --plum:#5E2A3C; --sage:#A3B18A; --espresso:#2E211B;
+  --muted:#7A6A5E; --paper:#F7F1E8;
+  --serif:'Fraunces',Georgia,serif; --sans:'DM Sans',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--sand);color:var(--espresso);font-family:var(--sans);line-height:1.5}
+a{color:inherit}
+button{font:inherit;cursor:pointer}
+
+/* Header */
+header{position:sticky;top:0;z-index:5;background:var(--sand);border-bottom:1px solid var(--line)}
+.bar{max-width:1080px;margin:0 auto;padding:14px 16px;display:flex;align-items:center;gap:16px}
+.logo{font-family:var(--serif);font-size:26px;font-weight:600;letter-spacing:-.5px;color:var(--plum);text-decoration:none}
+.logo span{color:var(--terracotta)}
+.search{flex:1;display:flex;align-items:center;gap:8px;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:9px 16px}
+.search input{border:0;background:transparent;outline:0;font:inherit;width:100%;color:var(--espresso)}
+.search input::placeholder{color:var(--muted)}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--plum);color:var(--sand);display:grid;place-items:center;font-weight:600;font-size:14px;flex-shrink:0}
+nav.tabs{max-width:1080px;margin:0 auto;padding:0 16px;display:flex;gap:24px;font-size:14px}
+nav.tabs a{text-decoration:none;padding:10px 0;color:var(--muted);border-bottom:2px solid transparent}
+nav.tabs a.on{color:var(--espresso);border-color:var(--terracotta);font-weight:500}
+
+/* Layout */
+main{max-width:1080px;margin:0 auto;padding:28px 16px 64px;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:32px}
+@media (max-width:860px){main{grid-template-columns:minmax(0,1fr)}}
+
+/* Restaurant hero */
+.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--terracotta);font-weight:600}
+h1{font-family:var(--serif);font-weight:400;font-size:clamp(36px,6vw,56px);line-height:1.05;margin:6px 0 10px;letter-spacing:-1px}
+h1 em{font-style:italic;color:var(--plum)}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:14px}
+.actions{display:flex;gap:10px;margin:20px 0 32px;flex-wrap:wrap}
+.btn{border-radius:999px;padding:10px 18px;border:1px solid var(--espresso);background:transparent;color:var(--espresso);font-weight:500;font-size:14px}
+.btn.primary{background:var(--plum);border-color:var(--plum);color:var(--sand)}
+.btn.saved{background:var(--sage);border-color:var(--sage)}
+
+/* Dish list */
+.section-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--espresso);padding-bottom:8px;margin-bottom:4px}
+.section-head h2{font-family:var(--serif);font-weight:400;font-size:26px;margin:0}
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:13px;padding:5px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--muted)}
+.chip.on{background:var(--espresso);border-color:var(--espresso);color:var(--sand)}
+.cat{font-family:var(--serif);font-style:italic;color:var(--terracotta);font-size:18px;margin:26px 0 4px}
+.dish{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:16px;align-items:center;padding:16px 0;border-bottom:1px dashed var(--line)}
+.dish h3{margin:0;font-size:17px;font-weight:600}
+.dish p{margin:2px 0 0;font-size:14px;color:var(--muted)}
+.price{font-family:var(--serif);font-size:16px;color:var(--muted)}
+.scores{display:flex;gap:8px;align-items:center}
+.score{min-width:52px;text-align:center;border-radius:10px;padding:6px 8px;line-height:1.1}
+.score b{display:block;font-family:var(--serif);font-size:20px;font-weight:600}
+.score small{font-size:10px;letter-spacing:.06em;text-transform:uppercase}
+.score.community{background:var(--sand-2);color:var(--espresso)}
+.score.mine{background:var(--plum);color:var(--sand)}
+.score.hi{background:var(--terracotta);color:var(--paper)}
+.rate{border:1px dashed var(--terracotta);color:var(--terracotta);background:transparent;border-radius:10px;padding:10px 12px;font-size:13px;font-weight:500}
+.lock{font-size:11px;color:var(--muted);display:block;text-align:center;margin-top:3px}
+.add-dish{margin-top:18px;width:100%;padding:14px;border:1px dashed var(--line);background:transparent;border-radius:12px;color:var(--muted);font-size:14px}
+@media (max-width:560px){.dish{grid-template-columns:minmax(0,1fr) auto}.price{display:none}}
+
+/* Sidebar */
+aside .card{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:20px}
+aside h4{font-family:var(--serif);font-weight:400;font-size:20px;margin:0 0 12px}
+.stat{display:flex;justify-content:space-between;font-size:14px;padding:6px 0;border-bottom:1px solid var(--sand-2)}
+.stat:last-child{border:0}
+.stat b{font-family:var(--serif);font-size:18px;color:var(--plum)}
+.try{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--sand-2)}
+.try:last-child{border:0}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--sage);flex-shrink:0}
+.try div{font-size:14px}
+.try small{display:block;color:var(--muted);font-size:12px}
+
+/* Rating sheet */
+.scrim{position:fixed;inset:0;background:rgba(46,33,27,.45);display:none;align-items:flex-end;justify-content:center;z-index:10}
+.scrim.open{display:flex}
+.sheet{background:var(--paper);width:100%;max-width:520px;border-radius:24px 24px 0 0;padding:24px 20px 28px;max-height:92vh;overflow:auto}
+@media (min-width:640px){.scrim{align-items:center}.sheet{border-radius:24px}}
+.sheet h3{font-family:var(--serif);font-weight:400;font-size:28px;margin:4px 0 18px}
+.grid10{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;margin-bottom:6px}
+.grid10 button{aspect-ratio:1;border-radius:10px;border:1px solid var(--line);background:var(--sand);font-family:var(--serif);font-size:17px;color:var(--espresso)}
+.grid10 button.sel{background:var(--plum);border-color:var(--plum);color:var(--sand)}
+.scale{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:18px}
+label.f{display:block;font-size:13px;font-weight:500;margin:0 0 6px}
+textarea{width:100%;min-height:80px;border:1px solid var(--line);border-radius:12px;background:var(--sand);padding:12px;font:inherit;color:var(--espresso);resize:vertical}
+.photo{margin:14px 0;border:1px dashed var(--line);border-radius:12px;padding:16px;text-align:center;color:var(--muted);font-size:14px}
+.toggle{display:flex;background:var(--sand-2);border-radius:999px;padding:4px;margin-bottom:20px}
+.toggle button{flex:1;border:0;background:transparent;border-radius:999px;padding:9px;font-size:14px;color:var(--muted)}
+.toggle button.on{background:var(--paper);color:var(--espresso);font-weight:500}
+.hint{font-size:12px;color:var(--muted);margin:-12px 0 18px}
+.row{display:flex;gap:10px}
+.row .btn{flex:1}
+.err{color:var(--terracotta);font-size:13px;min-height:18px;margin-bottom:6px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="bar">
+    <a href="#" class="logo">pal<span>a</span>te</a>
+    <label class="search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input placeholder="Search restaurants near Austin" aria-label="Search restaurants">
+    </label>
+    <div class="avatar" aria-label="Your profile">R</div>
+  </div>
+  <nav class="tabs">
+    <a href="#" class="on">Explore</a>
+    <a href="#">Visited</a>
+    <a href="#">Want to try</a>
+    <a href="#">Profile</a>
+  </nav>
+</header>
+
+<main>
+  <section>
+    <div class="eyebrow">French bistro · $$$</div>
+    <h1>Maison <em>Clé</em></h1>
+    <div class="meta">
+      <span>1204 E 6th St, Austin</span>
+      <span>Visited 3 times</span>
+      <span>Last visit Oct 18</span>
+    </div>
+    <div class="actions">
+      <button class="btn primary" onclick="openSheet('New dish')">Log a visit</button>
+      <button class="btn" id="saveBtn" onclick="toggleSave(this)">Add to want to try</button>
+    </div>
+
+    <div class="section-head">
+      <h2>The menu</h2>
+      <div class="filters">
+        <button class="chip on">All</button>
+        <button class="chip">Rated by me</button>
+        <button class="chip">Top rated</button>
+      </div>
+    </div>
+
+    <div class="cat">Starters</div>
+    <div class="dish">
+      <div><h3>Steak tartare</h3><p>Hand-cut beef, cornichon, egg yolk</p></div>
+      <div class="price">$19</div>
+      <div class="scores">
+        <div class="score community"><b>8.1</b><small>14 ratings</small></div>
+        <div><div class="score mine"><b>8.5</b><small>You</small></div><span class="lock">Public</span></div>
+      </div>
+    </div>
+    <div class="dish">
+      <div><h3>French onion soup</h3><p>Gruyère crouton, veal stock</p></div>
+      <div class="price">$14</div>
+      <div class="scores">
+        <div class="score community"><b>7.4</b><small>9 ratings</small></div>
+        <button class="rate" onclick="openSheet('French onion soup')">Rate</button>
+      </div>
+    </div>
+
+    <div class="cat">Mains</div>
+    <div class="dish">
+      <div><h3>Duck confit</h3><p>Lentils du Puy, frisée, cherry jus</p></div>
+      <div class="price">$34</div>
+      <div class="scores">
+        <div class="score community"><b>8.8</b><small>22 ratings</small></div>
+        <div><div class="score hi"><b>9.0</b><small>You</small></div><span class="lock">Private</span></div>
+      </div>
+    </div>
+    <div class="dish">
+      <div><h3>Moules frites</h3><p>White wine, shallot, herbed fries</p></div>
+      <div class="price">$28</div>
+      <div class="scores">
+        <div class="score community"><b>—</b><small>2 ratings</small></div>
+        <button class="rate" onclick="openSheet('Moules frites')">Rate</button>
+      </div>
+    </div>
+
+    <div class="cat">Dessert</div>
+    <div class="dish">
+      <div><h3>Crème brûlée</h3><p>Tahitian vanilla, burnt sugar</p></div>
+      <div class="price">$12</div>
+      <div class="scores">
+        <div class="score community"><b>9.1</b><small>18 ratings</small></div>
+        <div><div class="score hi"><b>9.5</b><small>You</small></div><span class="lock">Public</span></div>
+      </div>
+    </div>
+
+    <button class="add-dish" onclick="openSheet('New dish')">Can't find a dish? Add it to the menu</button>
+  </section>
+
+  <aside>
+    <div class="card">
+      <h4>Your palate</h4>
+      <div class="stat"><span>Restaurants visited</span><b>47</b></div>
+      <div class="stat"><span>Dishes rated</span><b>182</b></div>
+      <div class="stat"><span>Average score</span><b>7.6</b></div>
+    </div>
+    <div class="card">
+      <h4>Want to try</h4>
+      <div class="try"><span class="dot"></span><div>Odd Duck<small>Farm-to-table · South Lamar</small></div></div>
+      <div class="try"><span class="dot"></span><div>Uchi<small>Japanese · Omakase</small></div></div>
+      <div class="try"><span class="dot"></span><div>Birria tacos at El Primo<small>Dish · East Austin</small></div></div>
+    </div>
+  </aside>
+</main>
+
+<div class="scrim" id="scrim" onclick="if(event.target===this)closeSheet()">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="eyebrow">Maison Clé</div>
+    <h3 id="sheetTitle">Rate dish</h3>
+
+    <label class="f">Your score</label>
+    <div class="grid10" id="grid"></div>
+    <div class="scale"><span>Wouldn't order again</span><span>Unforgettable</span></div>
+
+    <label class="f" for="note">Note</label>
+    <textarea id="note" placeholder="Crispy skin, the cherry jus made it."></textarea>
+
+    <div class="photo">Add a photo</div>
+
+    <label class="f">Who can see this</label>
+    <div class="toggle" id="vis">
+      <button class="on" data-v="private">Only me</button>
+      <button data-v="public">Public</button>
+    </div>
+    <p class="hint" id="visHint">Private ratings never appear on your profile or in community scores.</p>
+
+    <div class="err" id="err"></div>
+    <div class="row">
+      <button class="btn" onclick="closeSheet()">Cancel</button>
+      <button class="btn primary" onclick="saveRating()">Save rating</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let picked = null;
+const grid = document.getElementById('grid');
+for (let i = 1; i <= 10; i++) {
+  const b = document.createElement('button');
+  b.textContent = i;
+  b.onclick = () => {
+    picked = i;
+    document.getElementById('err').textContent = '';
+    [...grid.children].forEach(c => c.classList.toggle('sel', +c.textContent === i));
+  };
+  grid.appendChild(b);
+}
+document.querySelectorAll('#vis button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('#vis button').forEach(x => x.classList.toggle('on', x === b));
+  document.getElementById('visHint').textContent = b.dataset.v === 'public'
+    ? 'Shows on your profile and counts toward the community score.'
+    : 'Private ratings never appear on your profile or in community scores.';
+});
+function openSheet(name) {
+  document.getElementById('sheetTitle').textContent = name;
+  picked = null;
+  [...grid.children].forEach(c => c.classList.remove('sel'));
+  document.getElementById('err').textContent = '';
+  document.getElementById('scrim').classList.add('open');
+}
+function closeSheet() { document.getElementById('scrim').classList.remove('open'); }
+function saveRating() {
+  if (!picked) { document.getElementById('err').textContent = 'Pick a score first.'; return; }
+  closeSheet();
+}
+function toggleSave(b) {
+  const on = b.classList.toggle('saved');
+  b.textContent = on ? 'Saved to want to try' : 'Add to want to try';
+}
+</script>
+</body>
+</html>
