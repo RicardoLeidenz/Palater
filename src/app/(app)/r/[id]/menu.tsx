@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+import { WantDishButton } from "@/components/want-toggle";
 import { AddDishSheet } from "@/components/add-dish-sheet";
 import { PhotoLightbox } from "@/components/photo-lightbox";
 import { RatingSheet, type RateTarget } from "@/components/rating-sheet";
@@ -19,11 +20,16 @@ export function RestaurantMenu({
   restaurantId,
   restaurantName,
   dishes,
+  wantDishIds,
+  saveButton,
 }: {
   restaurantId: string;
   restaurantName: string;
   dishes: MenuDish[];
+  wantDishIds: string[];
+  saveButton: ReactNode;
 }) {
+  const wanted = new Set(wantDishIds);
   const [filter, setFilter] = useState<Filter>("all");
   const [rating, setRating] = useState<RateTarget | null>(null);
   const [adding, setAdding] = useState(false);
@@ -48,6 +54,7 @@ export function RestaurantMenu({
         <button type="button" className="btn btn-primary" onClick={() => setAdding(true)}>
           Rate a dish
         </button>
+        {saveButton}
       </div>
 
       <div className="mb-1 flex flex-wrap items-baseline justify-between gap-3 border-b border-espresso pb-2">
@@ -91,6 +98,7 @@ export function RestaurantMenu({
           dishes={[...visible].sort((a, b) => b.myRating!.score - a.myRating!.score || a.name.localeCompare(b.name))}
           onRate={openRating}
           onView={setViewing}
+          wanted={wanted}
         />
       ) : (
         CATEGORIES.map((c) => ({ ...c, items: visible.filter((d) => d.category === c.key) }))
@@ -98,7 +106,7 @@ export function RestaurantMenu({
           .map((g) => (
             <div key={g.label}>
               <div className="text-terracotta mt-6 mb-1 font-serif text-lg italic">{g.label}</div>
-              <DishList dishes={g.items} onRate={openRating} onView={setViewing} />
+              <DishList dishes={g.items} onRate={openRating} onView={setViewing} wanted={wanted} />
             </div>
           ))
       )}
@@ -125,7 +133,12 @@ export function RestaurantMenu({
         alt={viewing ? `Your photo of ${viewing.name}` : ""}
         onClose={() => setViewing(null)}
       />
-      <RatingSheet dish={rating} restaurantName={restaurantName} open={rating !== null} onClose={() => setRating(null)} />
+      <RatingSheet
+        dish={rating}
+        restaurantName={restaurantName}
+        open={rating !== null}
+        onClose={() => setRating(null)}
+      />
     </>
   );
 }
@@ -134,18 +147,17 @@ function DishList({
   dishes,
   onRate,
   onView,
+  wanted,
 }: {
   dishes: MenuDish[];
   onRate: (d: MenuDish) => void;
   onView: (d: MenuDish) => void;
+  wanted: Set<string>;
 }) {
   return (
     <ul>
       {dishes.map((d) => (
-        <li
-          key={d.id}
-          className="border-line flex items-center gap-3 border-b border-dashed py-4"
-        >
+        <li key={d.id} className="border-line flex items-center gap-3 border-b border-dashed py-4">
           {/* Only dishes you photographed get a thumbnail; no placeholder otherwise. */}
           {d.myPhoto && (
             <button
@@ -178,14 +190,17 @@ function DishList({
               <ScoreBadge score={d.myRating.score} />
             </button>
           ) : (
-            <button
-              type="button"
-              onClick={() => onRate(d)}
-              aria-label={`Rate ${d.name}`}
-              className="border-terracotta text-terracotta shrink-0 rounded-[10px] border border-dashed px-3 py-2.5 text-[13px] font-medium"
-            >
-              Rate
-            </button>
+            <>
+              <WantDishButton dishId={d.id} dishName={d.name} saved={wanted.has(d.id)} />
+              <button
+                type="button"
+                onClick={() => onRate(d)}
+                aria-label={`Rate ${d.name}`}
+                className="border-terracotta text-terracotta shrink-0 rounded-[10px] border border-dashed px-3 py-2.5 text-[13px] font-medium"
+              >
+                Rate
+              </button>
+            </>
           )}
         </li>
       ))}

@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { MenuDish } from "@/lib/menu-shared";
 import { signedPhotoUrls } from "@/lib/photos/urls";
@@ -21,7 +22,7 @@ export type Restaurant = {
 };
 
 /** Everything the restaurant page needs. Private data comes back for the current user only (RLS). */
-export async function getRestaurantPage(id: string) {
+export const getRestaurantPage = cache(async (id: string) => {
   const supabase = await createSupabaseServerClient();
 
   const { data: restaurant, error } = await supabase
@@ -70,4 +71,4 @@ export async function getRestaurantPage(id: string) {
     visitCount: days.length,
     lastVisit: days.at(-1) ?? null,
   };
-}
+});

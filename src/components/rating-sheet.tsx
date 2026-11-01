@@ -3,6 +3,8 @@
 import { useEffect, useId, useState, useTransition } from "react";
 import { deleteRating, getRatingHistory, rateDish } from "@/app/(app)/r/[id]/actions";
 import { deleteDishPhoto, uploadDishPhoto } from "@/app/(app)/r/[id]/photo-actions";
+import { setWantStatus } from "@/app/(app)/want-to-try/actions";
+import type { WantPrompt } from "@/app/(app)/r/[id]/actions";
 import { NOTE_MAX, type MyPhoto, type MyRating, type RatingEntry } from "@/lib/menu-shared";
 import { prepareForUpload } from "@/lib/photos/client-resize";
 import { Sheet } from "./sheet";
@@ -38,6 +40,7 @@ function RatingForm({ dish, restaurantName, onDone }: { dish: RateTarget; restau
   const [score, setScore] = useState<number | null>(dish.myRating?.score ?? null);
   const [note, setNote] = useState(dish.myRating?.note ?? "");
   const [photo, setPhoto] = useState<PhotoChange>({ kind: "keep" });
+  const [wantPrompt, setWantPrompt] = useState<WantPrompt>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, startSaving] = useTransition();
   const noteId = useId();
@@ -72,9 +75,11 @@ function RatingForm({ dish, restaurantName, onDone }: { dish: RateTarget; restau
     startSaving(async () => {
       // A re-rate only adds a history entry when the score or comment changed;
       // swapping just the photo doesn't.
+      let want: WantPrompt = null;
       if (ratingChanged) {
         const res = await rateDish({ dishId: dish.id, score, note });
         if (!res.ok) return setError(res.error);
+        want = res.data.want;
       }
       if (photo.kind === "new") {
         const form = new FormData();
@@ -87,8 +92,13 @@ function RatingForm({ dish, restaurantName, onDone }: { dish: RateTarget; restau
         const res = await deleteDishPhoto(dish.id);
         if (!res.ok) return setError(res.error);
       }
-      onDone();
+      if (want) setWantPrompt(want);
+      else onDone();
     });
+  }
+
+  if (wantPrompt) {
+    return <MoveToVisited prompt={wantPrompt} onDone={onDone} />;
   }
 
   return (
@@ -317,6 +327,46 @@ function PhotoPicker({
           <div className="flex gap-2">{inputs}</div>
         </>
       )}
+    </div>
+  );
+}
+
+/** Shown after rating something that was on your want-to-try list. */
+function MoveToVisited({ prompt, onDone }: { prompt: NonNullable<WantPrompt>; onDone: () => void }) {
+  const [pending, start] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <div className="py-2 text-center">
+      <div className="eyebrow">Rating saved</div>
+      <h2 id="rating-sheet-title" className="mt-2 mb-2 font-serif text-[26px] leading-tight">
+        Tried it!
+      </h2>
+      <p className="text-muted mb-5">
+        <span className="text-espresso font-semibold">{prompt.label}</span> is on your want-to-try list. Move it to
+        visited?
+      </p>
+      <p role="alert" className="text-terracotta min-h-[18px] text-sm">
+        {error}
+      </p>
+      <div className="flex gap-2.5">
+        <button type="button" className="btn flex-1" onClick={onDone}>
+          Keep on list
+        </button>
+        <button
+          type="button"
+          className="btn btn-primary flex-1"
+          disabled={pending}
+          onClick={() =>
+            start(async () => {
+              const res = await setWantStatus(prompt.id, "visited");
+              if (res.ok) onDone();
+              else setError(res.error);
+            })
+          }
+        >
+          Move to visited
+        </button>
+      </div>
     </div>
   );
 }

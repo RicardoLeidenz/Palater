@@ -103,13 +103,19 @@ const rateSchema = z.object({
     .transform((v) => v || null),
 });
 
-/** Saves a rating. Re-rating adds a new entry; history is kept. */
-export async function rateDish(input: { dishId: string; score: number; note: string }): Promise<Result<null>> {
+export type WantPrompt = { id: string; label: string } | null;
+
+/**
+ * Saves a rating. Re-rating adds a new entry; history is kept. If the dish (or
+ * its restaurant) is on your want-to-try list, returns it so the UI can offer
+ * to move it to "visited".
+ */
+export async function rateDish(input: { dishId: string; score: number; note: string }): Promise<Result<{ want: WantPrompt }>> {
   const user = await getCurrentUser();
   const parsed = rateSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
 
-  return limited<null>(`rate:${user.id}`, 120, 3600, async () => {
+  return limited<{ want: WantPrompt }>(`rate:${user.id}`, 120, 3600, async () => {
     const supabase = await createSupabaseServerClient();
     const { error } = await supabase.from("ratings").insert({
       dish_id: parsed.data.dishId,
@@ -118,8 +124,27 @@ export async function rateDish(input: { dishId: string; score: number; note: str
       user_id: user.id,
     });
     if (error) return { ok: false, error: "Couldn't save your rating. Please try again." };
+
+    const { data: dish } = await supabase
+      .from("dishes")
+      .select("name, restaurant_id, restaurants(name)")
+      .eq("id", parsed.data.dishId)
+      .single();
+    const { data: wants } = await supabase
+      .from("want_to_try")
+      .select("id, dish_id, restaurant_id")
+      .eq("status", "want")
+      .or(`dish_id.eq.${parsed.data.dishId}${dish ? `,restaurant_id.eq.${dish.restaurant_id}` : ""}`);
+    const forDish = wants?.find((w) => w.dish_id === parsed.data.dishId);
+    const forRestaurant = wants?.find((w) => w.restaurant_id);
+    const want: WantPrompt = forDish
+      ? { id: forDish.id, label: dish?.name ?? "This dish" }
+      : forRestaurant
+        ? { id: forRestaurant.id, label: (dish?.restaurants as unknown as { name: string } | null)?.name ?? "This restaurant" }
+        : null;
+
     refresh();
-    return { ok: true, data: null };
+    return { ok: true, data: { want } };
   });
 }
 
