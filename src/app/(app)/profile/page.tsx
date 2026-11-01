@@ -28,7 +28,7 @@ export default async function ProfilePage() {
       </div>
       {top.length === 0 ? (
         <div className="mt-4">
-          <EmptyState title="Nothing rated yet">Your favourite plates will show up here.</EmptyState>
+          <EmptyState title="Nothing rated yet">Your favorite plates will show up here.</EmptyState>
         </div>
       ) : (
         <ol className="mb-10">
