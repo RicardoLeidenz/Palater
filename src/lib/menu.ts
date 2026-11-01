@@ -1,24 +1,9 @@
 import "server-only";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import type { MenuDish } from "@/lib/menu-shared";
 
-export const CATEGORIES = [
-  { key: "starter", label: "Starters" },
-  { key: "main", label: "Mains" },
-  { key: "dessert", label: "Desserts" },
-  { key: "drink", label: "Drinks" },
-  { key: null, label: "Other" },
-] as const;
-
-export type Category = "starter" | "main" | "dessert" | "drink";
-
-export type MenuDish = {
-  id: string;
-  name: string;
-  description: string | null;
-  category: Category | null;
-  hidden: boolean;
-  myRating: { score: number; note: string | null; createdAt: string } | null;
-};
+export { CATEGORIES } from "@/lib/menu-shared";
+export type { Category, MenuDish } from "@/lib/menu-shared";
 
 export type Restaurant = {
   id: string;

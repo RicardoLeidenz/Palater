@@ -137,3 +137,44 @@ button:disabled {
     animation: none;
   }
 }
+
+/* Bottom sheet on phones, centered modal on wider screens (reference .sheet). */
+dialog.sheet {
+  margin: auto auto 0;
+  width: 100%;
+  max-width: 520px;
+  max-height: 92dvh;
+  padding: 0;
+  border: 0;
+  background: var(--paper);
+  color: var(--espresso);
+  border-radius: 24px 24px 0 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+dialog.sheet::backdrop {
+  background: rgb(46 33 27 / 0.45);
+}
+dialog.sheet[open] {
+  animation: sheet-up 0.22s ease-out;
+}
+@media (min-width: 640px) {
+  dialog.sheet {
+    margin: auto;
+    border-radius: 24px;
+  }
+}
+@keyframes sheet-up {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  dialog.sheet[open] {
+    animation: none;
+  }
+}
+html:has(dialog.sheet[open]) {
+  overflow: hidden;
+}
