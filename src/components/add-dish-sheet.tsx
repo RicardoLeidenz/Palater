@@ -4,6 +4,7 @@ import { useEffect, useId, useState, useTransition } from "react";
 import { addDish, suggestDishes } from "@/app/(app)/r/[id]/actions";
 import { CATEGORIES, type Category, type DishSuggestion } from "@/lib/menu-shared";
 import { normalizeName } from "@/lib/similarity";
+import { OFFLINE_MESSAGE } from "@/lib/offline";
 import { Sheet } from "./sheet";
 
 /**
@@ -86,9 +87,13 @@ function AddDishForm({
     }
     setError(null);
     startSaving(async () => {
-      const res = await addDish({ restaurantId, name: trimmed, description, category });
-      if (res.ok) onPicked(res.data.dish);
-      else setError(res.error);
+      try {
+        const res = await addDish({ restaurantId, name: trimmed, description, category });
+        if (res.ok) onPicked(res.data.dish);
+        else setError(res.error);
+      } catch {
+        setError(OFFLINE_MESSAGE);
+      }
     });
   }
 

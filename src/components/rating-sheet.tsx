@@ -5,8 +5,11 @@ import { deleteRating, getRatingHistory, rateDish } from "@/app/(app)/r/[id]/act
 import { deleteDishPhoto, uploadDishPhoto } from "@/app/(app)/r/[id]/photo-actions";
 import { setWantStatus } from "@/app/(app)/want-to-try/actions";
 import type { WantPrompt } from "@/app/(app)/r/[id]/actions";
+import { reportDish } from "@/app/(app)/r/[id]/report-actions";
+import { REPORT_REASONS, type ReportReason } from "@/lib/moderation-shared";
 import { NOTE_MAX, type MyPhoto, type MyRating, type RatingEntry } from "@/lib/menu-shared";
 import { prepareForUpload } from "@/lib/photos/client-resize";
+import { OFFLINE_MESSAGE } from "@/lib/offline";
 import { Sheet } from "./sheet";
 
 export type RateTarget = { id: string; name: string; myRating: MyRating | null; myPhoto: MyPhoto | null };
@@ -35,7 +38,15 @@ export function RatingSheet({
   );
 }
 
-function RatingForm({ dish, restaurantName, onDone }: { dish: RateTarget; restaurantName: string; onDone: () => void }) {
+function RatingForm({
+  dish,
+  restaurantName,
+  onDone,
+}: {
+  dish: RateTarget;
+  restaurantName: string;
+  onDone: () => void;
+}) {
   // Re-rating starts from your last score and comment, so small changes are quick.
   const [score, setScore] = useState<number | null>(dish.myRating?.score ?? null);
   const [note, setNote] = useState(dish.myRating?.note ?? "");
@@ -45,8 +56,7 @@ function RatingForm({ dish, restaurantName, onDone }: { dish: RateTarget; restau
   const [saving, startSaving] = useTransition();
   const noteId = useId();
 
-  const ratingChanged =
-    !dish.myRating || score !== dish.myRating.score || note.trim() !== (dish.myRating.note ?? "");
+  const ratingChanged = !dish.myRating || score !== dish.myRating.score || note.trim() !== (dish.myRating.note ?? "");
   const photoChanged = photo.kind !== "keep";
   const saveLabel = !dish.myRating
     ? "Save rating"
@@ -73,28 +83,36 @@ function RatingForm({ dish, restaurantName, onDone }: { dish: RateTarget; restau
     }
     setError(null);
     startSaving(async () => {
-      // A re-rate only adds a history entry when the score or comment changed;
-      // swapping just the photo doesn't.
-      let want: WantPrompt = null;
-      if (ratingChanged) {
-        const res = await rateDish({ dishId: dish.id, score, note });
-        if (!res.ok) return setError(res.error);
-        want = res.data.want;
+      try {
+        await persist(score);
+      } catch {
+        setError(OFFLINE_MESSAGE);
       }
-      if (photo.kind === "new") {
-        const form = new FormData();
-        form.set("dishId", dish.id);
-        form.set("photo", photo.blob, "plate.jpg");
-        const res = await uploadDishPhoto(form);
-        if (!res.ok) return setError(ratingChanged ? `Rating saved, but the photo wasn't: ${res.error}` : res.error);
-      }
-      if (photo.kind === "remove") {
-        const res = await deleteDishPhoto(dish.id);
-        if (!res.ok) return setError(res.error);
-      }
-      if (want) setWantPrompt(want);
-      else onDone();
     });
+  }
+
+  async function persist(score: number) {
+    // A re-rate only adds a history entry when the score or comment changed;
+    // swapping just the photo doesn't.
+    let want: WantPrompt = null;
+    if (ratingChanged) {
+      const res = await rateDish({ dishId: dish.id, score, note });
+      if (!res.ok) return setError(res.error);
+      want = res.data.want;
+    }
+    if (photo.kind === "new") {
+      const form = new FormData();
+      form.set("dishId", dish.id);
+      form.set("photo", photo.blob, "plate.jpg");
+      const res = await uploadDishPhoto(form);
+      if (!res.ok) return setError(ratingChanged ? `Rating saved, but the photo wasn't: ${res.error}` : res.error);
+    }
+    if (photo.kind === "remove") {
+      const res = await deleteDishPhoto(dish.id);
+      if (!res.ok) return setError(res.error);
+    }
+    if (want) setWantPrompt(want);
+    else onDone();
   }
 
   if (wantPrompt) {
@@ -162,7 +180,15 @@ function RatingForm({ dish, restaurantName, onDone }: { dish: RateTarget; restau
       />
 
       <p className="text-muted mt-2 mb-4 flex items-center gap-1.5 text-xs">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          aria-hidden="true"
+        >
           <rect x="4" y="11" width="16" height="10" rx="2" />
           <path d="M8 11V7a4 4 0 0 1 8 0v4" />
         </svg>
@@ -182,6 +208,8 @@ function RatingForm({ dish, restaurantName, onDone }: { dish: RateTarget; restau
       </div>
 
       {dish.myRating && <History dishId={dish.id} />}
+
+      <ReportDish dishId={dish.id} />
     </>
   );
 }
@@ -205,7 +233,7 @@ function History({ dishId }: { dishId: string }) {
     if (!confirm("Delete this rating from your history?")) return;
     setEntries((e) => e?.filter((x) => x.id !== id) ?? null);
     startDeleting(async () => {
-      const res = await deleteRating(id);
+      const res = await deleteRating(id).catch(() => ({ ok: false }));
       if (!res.ok) setFailed(true);
     });
   }
@@ -280,7 +308,15 @@ function PhotoPicker({
       {/* capture="environment" opens the rear camera directly on phones. */}
       <label className="btn flex-1 cursor-pointer">
         <input type="file" accept="image/*" capture="environment" className="sr-only" onChange={picked} />
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          aria-hidden="true"
+        >
           <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
           <circle cx="12" cy="13" r="3.5" />
         </svg>
@@ -309,7 +345,11 @@ function PhotoPicker({
               <input type="file" accept="image/*" className="sr-only" onChange={picked} />
               Replace photo
             </label>
-            <button type="button" className="text-muted self-start text-sm underline" onClick={() => onChange(current ? { kind: "remove" } : { kind: "keep" })}>
+            <button
+              type="button"
+              className="text-muted self-start text-sm underline"
+              onClick={() => onChange(current ? { kind: "remove" } : { kind: "keep" })}
+            >
               Remove photo
             </button>
           </div>
@@ -358,9 +398,13 @@ function MoveToVisited({ prompt, onDone }: { prompt: NonNullable<WantPrompt>; on
           disabled={pending}
           onClick={() =>
             start(async () => {
-              const res = await setWantStatus(prompt.id, "visited");
-              if (res.ok) onDone();
-              else setError(res.error);
+              try {
+                const res = await setWantStatus(prompt.id, "visited");
+                if (res.ok) onDone();
+                else setError(res.error);
+              } catch {
+                setError(OFFLINE_MESSAGE);
+              }
             })
           }
         >
@@ -368,5 +412,89 @@ function MoveToVisited({ prompt, onDone }: { prompt: NonNullable<WantPrompt>; on
         </button>
       </div>
     </div>
+  );
+}
+
+/** Flag a wrong, duplicate or offensive dish name on the shared menu. */
+function ReportDish({ dishId }: { dishId: string }) {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState<ReportReason | null>(null);
+  const [details, setDetails] = useState("");
+  const [sent, setSent] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+
+  if (sent) {
+    return (
+      <p role="status" className="text-muted mt-6 text-center text-sm">
+        {sent}
+      </p>
+    );
+  }
+  if (!open) {
+    return (
+      <div className="mt-6 text-center">
+        <button type="button" className="text-muted text-xs underline" onClick={() => setOpen(true)}>
+          Report this dish name
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <section className="border-line mt-6 border-t border-dashed pt-4" aria-label="Report this dish name">
+      <h3 className="mb-1 font-serif text-lg">What&apos;s wrong with this dish?</h3>
+      <p className="text-muted mb-3 text-xs">Reports go to the Palater admin. Your ratings are not shared.</p>
+      <div className="mb-3 flex flex-wrap gap-1.5" role="group" aria-label="Reason">
+        {REPORT_REASONS.map((r) => (
+          <button
+            key={r.key}
+            type="button"
+            aria-pressed={reason === r.key}
+            onClick={() => setReason(r.key)}
+            className={`chip ${reason === r.key ? "chip-on" : ""}`}
+          >
+            {r.label}
+          </button>
+        ))}
+      </div>
+      <input
+        value={details}
+        onChange={(e) => setDetails(e.target.value.slice(0, 500))}
+        placeholder="Anything else? (optional)"
+        aria-label="Report details"
+        className="field mb-2"
+      />
+      {error && (
+        <p role="alert" className="text-terracotta mb-2 text-sm">
+          {error}
+        </p>
+      )}
+      <div className="flex gap-2">
+        <button type="button" className="btn flex-1" onClick={() => setOpen(false)}>
+          Never mind
+        </button>
+        <button
+          type="button"
+          className="btn btn-primary flex-1"
+          disabled={!reason || pending}
+          onClick={() =>
+            start(async () => {
+              try {
+                const res = await reportDish({ dishId, reason: reason!, details });
+                if (!res.ok) return setError(res.error);
+                setSent(
+                  res.alreadyReported ? "You've already reported this dish. Thanks!" : "Thanks, we'll take a look.",
+                );
+              } catch {
+                setError(OFFLINE_MESSAGE);
+              }
+            })
+          }
+        >
+          {pending ? "Sending…" : "Send report"}
+        </button>
+      </div>
+    </section>
   );
 }

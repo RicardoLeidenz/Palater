@@ -36,6 +36,7 @@ const USERS: {
   wantRestaurants: string[];
   wantDishes: { dish: string; restaurant: string }[];
   photos?: { restaurant: string; dish: string; food: string[] }[];
+  reports?: { restaurant: string; dish: string; reason: string; details?: string }[];
 }[] = [
   {
     email: "ana@demo.palater.local",
@@ -80,6 +81,9 @@ const USERS: {
     ],
     wantRestaurants: ["Trattoria Lucca"],
     wantDishes: [{ restaurant: "Maison Clé", dish: "Steak frites" }],
+    reports: [
+      { restaurant: "Trattoria Lucca", dish: "Cacio e peppe", reason: "duplicate", details: "Same as Cacio e pepe, just misspelled." },
+    ],
   },
 ];
 
@@ -183,6 +187,13 @@ async function main() {
       await admin
         .from("dish_photos")
         .insert({ user_id: userId, dish_id: dish, full_path: `${stem}-full.webp`, thumb_path: `${stem}-thumb.webp`, width: 1200, height: 900 })
+        .throwOnError();
+    }
+
+    for (const r of u.reports ?? []) {
+      await admin
+        .from("dish_reports")
+        .insert({ reporter_id: userId, dish_id: dishId(r.restaurant, r.dish), reason: r.reason, details: r.details ?? null })
         .throwOnError();
     }
 

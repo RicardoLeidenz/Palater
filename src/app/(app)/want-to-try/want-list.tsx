@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import type { WantItem } from "@/lib/lists";
+import { OFFLINE_MESSAGE } from "@/lib/offline";
 import { removeWant, setWantStatus } from "./actions";
 
 export function WantList({ items, label }: { items: WantItem[]; label: string }) {
@@ -23,7 +24,7 @@ function WantRow({ item }: { item: WantItem }) {
   const run = (fn: () => Promise<{ ok: boolean; error?: string }>) =>
     start(async () => {
       setError(null);
-      const res = await fn();
+      const res = await fn().catch(() => ({ ok: false, error: OFFLINE_MESSAGE }));
       if (!res.ok) setError(res.error ?? "Something went wrong.");
     });
 

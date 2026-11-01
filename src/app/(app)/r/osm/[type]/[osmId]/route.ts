@@ -19,12 +19,12 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/r/osm/[type]
   try {
     const restaurantId = await importOsmPlace(user.id, type as "node" | "way" | "relation", id);
     if (!restaurantId) {
-      return NextResponse.redirect(new URL("/search?missing=1", request.nextUrl.origin));
+      return NextResponse.redirect(new URL("/search?notice=missing", request.nextUrl.origin));
     }
     return NextResponse.redirect(new URL(`/r/${restaurantId}`, request.nextUrl.origin));
   } catch (e) {
     if (e instanceof OsmUnavailableError || e instanceof RateLimitError) {
-      return new NextResponse(e.message, { status: 503, headers: { "Retry-After": "5" } });
+      return NextResponse.redirect(new URL("/search?notice=busy", request.nextUrl.origin));
     }
     throw e;
   }

@@ -15,7 +15,8 @@ export function WantRestaurantButton({ restaurantId, saved }: { restaurantId: st
       onClick={() =>
         start(async () => {
           setOptimistic(!optimistic);
-          await toggleWant({ restaurantId });
+          // On failure the optimistic state simply snaps back.
+          await toggleWant({ restaurantId }).catch(() => null);
         })
       }
       className={`btn ${optimistic ? "btn-saved" : ""}`}
@@ -39,7 +40,7 @@ export function WantDishButton({ dishId, dishName, saved }: { dishId: string; di
       onClick={() =>
         start(async () => {
           setOptimistic(!optimistic);
-          await toggleWant({ dishId });
+          await toggleWant({ dishId }).catch(() => null);
         })
       }
       className={`grid size-10 shrink-0 place-items-center rounded-[10px] ${optimistic ? "text-sage" : "text-muted"}`}

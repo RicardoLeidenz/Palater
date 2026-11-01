@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { getStats, getTopDishes } from "@/lib/lists";
+import { isAdmin } from "@/lib/admin";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ScoreBadge } from "@/components/score-badge";
 import { EmptyState } from "@/components/states";
 
 export default async function ProfilePage() {
-  const [user, stats, top] = await Promise.all([getCurrentUser(), getStats(), getTopDishes(5)]);
+  const [user, stats, top, admin] = await Promise.all([getCurrentUser(), getStats(), getTopDishes(5), isAdmin()]);
+  const openReports = admin ? await countOpenReports() : 0;
 
   return (
     <section className="max-w-2xl">
@@ -52,6 +55,18 @@ export default async function ProfilePage() {
         </p>
       </div>
 
+      {admin && (
+        <Link href="/admin/reports" className="card mb-6 flex items-center justify-between no-underline">
+          <span>
+            <span className="block font-serif text-xl">Moderation</span>
+            <span className="text-muted text-sm">Review reported dish names</span>
+          </span>
+          <span className={`rounded-full px-3 py-1 text-sm font-semibold ${openReports ? "bg-terracotta text-paper" : "bg-sand-2 text-muted"}`}>
+            {openReports} open
+          </span>
+        </Link>
+      )}
+
       <form action="/auth/signout" method="post">
         <button type="submit" className="btn">
           Sign out
@@ -68,4 +83,10 @@ function Tile({ label, value }: { label: string; value: number | string }) {
       <span className="text-muted text-xs tracking-[0.06em] uppercase">{label}</span>
     </div>
   );
+}
+
+async function countOpenReports() {
+  const supabase = await createSupabaseServerClient();
+  const { count } = await supabase.from("dish_reports").select("id", { count: "exact", head: true }).eq("status", "open");
+  return count ?? 0;
 }

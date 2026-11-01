@@ -8,7 +8,7 @@ import { PartialResultsNotice, PlacesError } from "@/components/places-error";
 import { EmptyState } from "@/components/states";
 
 export default async function SearchPage({ searchParams }: PageProps<"/search">) {
-  const { q } = await searchParams;
+  const { q, notice } = await searchParams;
   const query = typeof q === "string" ? q.trim().slice(0, 100) : "";
   const [user, location] = await Promise.all([getCurrentUser(), getSearchLocation()]);
 
@@ -17,6 +17,16 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
       <div className="eyebrow">{location ? `Searching near ${location.label}` : "Searching everywhere"}</div>
       <h1 className="display mt-1.5 mb-6 break-words">{query ? `“${query}”` : "Find a restaurant"}</h1>
 
+      {notice === "busy" && (
+        <p role="alert" className="bg-sand-2 text-terracotta mb-4 rounded-xl px-4 py-2.5 text-sm">
+          OpenStreetMap is busy, so we couldn&apos;t open that place just now. Try again in a moment.
+        </p>
+      )}
+      {notice === "missing" && (
+        <p role="alert" className="bg-sand-2 text-terracotta mb-4 rounded-xl px-4 py-2.5 text-sm">
+          That place no longer exists on OpenStreetMap. You can add it yourself if it&apos;s still open.
+        </p>
+      )}
       {query.length < 2 ? (
         <EmptyState title="What are you looking for?">
           Type a restaurant name in the search bar above, at least two letters.

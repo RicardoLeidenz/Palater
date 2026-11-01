@@ -40,6 +40,8 @@ insert into public.dishes (restaurant_id, name, description, category, created_b
   ('a0000000-0000-4000-8000-000000000004', 'Burrata',            'Heirloom tomato, basil oil',             'starter', null),
   ('a0000000-0000-4000-8000-000000000004', 'Arancini',           'Saffron risotto, mozzarella',            'starter', null),
   ('a0000000-0000-4000-8000-000000000004', 'Cacio e pepe',       'Tonnarelli, pecorino, black pepper',     'main',    null),
+  -- Deliberate near-duplicate so the moderation queue has something in it.
+  ('a0000000-0000-4000-8000-000000000004', 'Cacio e peppe',      null,                                     'main',    null),
   ('a0000000-0000-4000-8000-000000000004', 'Pappardelle al ragù', 'Slow-cooked beef and pork ragù',        'main',    null),
   ('a0000000-0000-4000-8000-000000000004', 'Margherita pizza',   'San Marzano, fior di latte',             'main',    null),
   ('a0000000-0000-4000-8000-000000000004', 'Tiramisù',           null,                                     'dessert', null),

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { saveCurrentPosition } from "@/app/(app)/location/actions";
+import { OFFLINE_MESSAGE } from "@/lib/offline";
 
 const GEO_ERRORS: Record<number, string> = {
   1: "Location access is off for this site. Search by city instead, or allow location in your browser settings.",
@@ -28,7 +29,7 @@ export function LocationPicker({ defaultCity = "" }: { defaultCity?: string }) {
       (pos) => {
         setLocating(false);
         startTransition(async () => {
-          const err = await saveCurrentPosition(pos.coords.latitude, pos.coords.longitude);
+          const err = await saveCurrentPosition(pos.coords.latitude, pos.coords.longitude).catch(() => OFFLINE_MESSAGE);
           if (err) setError(err);
           else router.refresh();
         });
