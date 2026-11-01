@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import { HeaderSearchInput } from "./header-search";
 import { Logo } from "./logo";
 import { NavTabs } from "./nav-tabs";
 
@@ -13,14 +15,9 @@ export function Header({ initial }: { initial: string }) {
               <circle cx="11" cy="11" r="7" />
               <path d="m20 20-3.5-3.5" />
             </svg>
-            <input
-              name="q"
-              type="search"
-              placeholder="Search restaurants"
-              aria-label="Search restaurants"
-              enterKeyHint="search"
-              className="placeholder:text-muted w-full min-w-0 border-0 bg-transparent outline-none"
-            />
+            <Suspense fallback={<span className="text-muted">Search restaurants</span>}>
+              <HeaderSearchInput />
+            </Suspense>
           </label>
         </form>
         <Link

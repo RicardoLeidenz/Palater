@@ -16,11 +16,10 @@ export const publicEnv = publicSchema.parse({
 
 const serverSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
-  // Sent with every OSM request, as Nominatim/Photon/Overpass policies require.
+  // Sent with every OSM request, as Nominatim/Photon usage policies require.
   OSM_CONTACT_EMAIL: z.email(),
   PHOTON_URL: z.url().default("https://photon.komoot.io"),
   NOMINATIM_URL: z.url().default("https://nominatim.openstreetmap.org"),
-  OVERPASS_URL: z.url().default("https://overpass-api.de/api/interpreter"),
   // Lets seeded demo users sign in with a password. Never honored in production.
   ENABLE_DEV_LOGIN: z
     .enum(["true", "false"])
