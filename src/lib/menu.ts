@@ -1,6 +1,7 @@
 import "server-only";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { MenuDish } from "@/lib/menu-shared";
+import { signedPhotoUrls } from "@/lib/photos/urls";
 
 export { CATEGORIES } from "@/lib/menu-shared";
 export type { Category, MenuDish } from "@/lib/menu-shared";
@@ -39,13 +40,14 @@ export async function getRestaurantPage(id: string) {
   if (dishError) throw dishError;
 
   const dishIds = dishes.map((d) => d.id);
-  const [latest, visits] = await Promise.all([
+  const [latest, visits, photos] = await Promise.all([
     dishIds.length
       ? supabase.from("latest_ratings").select("dish_id, score, note, created_at").in("dish_id", dishIds)
       : Promise.resolve({ data: [], error: null }),
     dishIds.length
       ? supabase.from("ratings").select("created_at").in("dish_id", dishIds)
       : Promise.resolve({ data: [], error: null }),
+    signedPhotoUrls(supabase, dishIds),
   ]);
   if (latest.error) throw latest.error;
   if (visits.error) throw visits.error;
@@ -56,6 +58,7 @@ export async function getRestaurantPage(id: string) {
     return {
       ...d,
       myRating: r ? { score: r.score, note: r.note, createdAt: r.created_at } : null,
+      myPhoto: photos.get(d.id) ?? null,
     };
   });
 

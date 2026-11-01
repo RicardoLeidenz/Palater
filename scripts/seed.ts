@@ -8,6 +8,7 @@
  */
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
+import sharp from "sharp";
 
 config({ path: ".env.local" });
 
@@ -34,6 +35,7 @@ const USERS: {
   ratings: SeedRating[];
   wantRestaurants: string[];
   wantDishes: { dish: string; restaurant: string }[];
+  photos?: { restaurant: string; dish: string; food: string[] }[];
 }[] = [
   {
     email: "ana@demo.palater.local",
@@ -53,6 +55,12 @@ const USERS: {
       { restaurant: "Kōyō Ramen", dish: "Yuzu highball", score: 8, daysAgo: 7 },
       { restaurant: "Trattoria Lucca", dish: "Cacio e pepe", score: 9, note: "Silky, loads of pepper.", daysAgo: 3 },
       { restaurant: "Trattoria Lucca", dish: "Tiramisù", score: 7, daysAgo: 3 },
+    ],
+    photos: [
+      { restaurant: "Maison Clé", dish: "Duck confit", food: ["#8a4a2b", "#6b7d3a", "#5e2a3c"] },
+      { restaurant: "Maison Clé", dish: "Crème brûlée", food: ["#e0b25c", "#c9822f"] },
+      { restaurant: "Kōyō Ramen", dish: "Tonkotsu ramen", food: ["#ead9b8", "#f3c34a", "#4f6b3a"] },
+      { restaurant: "Nopal & Smoke", dish: "Birria tacos", food: ["#a3341f", "#e8c27a", "#6f8f3c"] },
     ],
     wantRestaurants: ["Saffron Table"],
     wantDishes: [
@@ -74,6 +82,28 @@ const USERS: {
     wantDishes: [{ restaurant: "Maison Clé", dish: "Steak frites" }],
   },
 ];
+
+/** A simple top-down "plate" so demo thumbnails look like food photos. */
+async function plateIllustration(food: string[]) {
+  const blobs = food
+    .map((c, i) => {
+      const a = (i / food.length) * Math.PI * 2;
+      const x = 600 + Math.cos(a) * 90;
+      const y = 450 + Math.sin(a) * 70;
+      return `<ellipse cx="${x}" cy="${y}" rx="${150 - i * 25}" ry="${110 - i * 18}" fill="${c}" transform="rotate(${i * 37} ${x} ${y})"/>`;
+    })
+    .join("");
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900">
+    <rect width="1200" height="900" fill="#6b4a35"/>
+    <rect width="1200" height="900" fill="url(#g)" opacity=".35"/>
+    <defs><radialGradient id="g"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#000"/></radialGradient></defs>
+    <circle cx="610" cy="465" r="360" fill="#000" opacity=".25"/>
+    <circle cx="600" cy="450" r="360" fill="#f7f1e8"/>
+    <circle cx="600" cy="450" r="290" fill="#efe6da"/>
+    ${blobs}
+  </svg>`;
+  return sharp(Buffer.from(svg)).webp({ quality: 80 }).toBuffer();
+}
 
 async function main() {
   const { data: dishes, error } = await admin
@@ -98,7 +128,15 @@ async function main() {
     // Recreate the user so re-running the seed is idempotent.
     const { data: list } = await admin.auth.admin.listUsers();
     const existing = list?.users.find((x) => x.email === u.email);
-    if (existing) await admin.auth.admin.deleteUser(existing.id);
+    if (existing) {
+      // Storage objects aren't removed with the user; clear their folder first.
+      const { data: folders } = await admin.storage.from("plate-photos").list(existing.id);
+      for (const f of folders ?? []) {
+        const { data: files } = await admin.storage.from("plate-photos").list(`${existing.id}/${f.name}`);
+        await admin.storage.from("plate-photos").remove((files ?? []).map((x) => `${existing.id}/${f.name}/${x.name}`));
+      }
+      await admin.auth.admin.deleteUser(existing.id);
+    }
 
     const { data: created, error: createError } = await admin.auth.admin.createUser({
       email: u.email,
@@ -133,6 +171,20 @@ async function main() {
         ...u.wantDishes.map((w) => ({ user_id: userId, dish_id: dishId(w.restaurant, w.dish) })),
       ])
       .throwOnError();
+
+    for (const ph of u.photos ?? []) {
+      const dish = dishId(ph.restaurant, ph.dish);
+      const full = await plateIllustration(ph.food);
+      const stem = `${userId}/${dish}/seed`;
+      const thumb = await sharp(full).resize(240, 240, { fit: "cover" }).webp({ quality: 72 }).toBuffer();
+      const bucket = admin.storage.from("plate-photos");
+      await bucket.upload(`${stem}-full.webp`, full, { contentType: "image/webp", upsert: true });
+      await bucket.upload(`${stem}-thumb.webp`, thumb, { contentType: "image/webp", upsert: true });
+      await admin
+        .from("dish_photos")
+        .insert({ user_id: userId, dish_id: dish, full_path: `${stem}-full.webp`, thumb_path: `${stem}-thumb.webp`, width: 1200, height: 900 })
+        .throwOnError();
+    }
 
     console.log(`✓ ${u.name} <${u.email}>: ${u.ratings.length} ratings${u.isAdmin ? " (admin)" : ""}`);
   }

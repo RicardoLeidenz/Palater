@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AddDishSheet } from "@/components/add-dish-sheet";
+import { PhotoLightbox } from "@/components/photo-lightbox";
 import { RatingSheet, type RateTarget } from "@/components/rating-sheet";
 import { ScoreBadge } from "@/components/score-badge";
 import { EmptyState } from "@/components/states";
@@ -26,13 +27,14 @@ export function RestaurantMenu({
   const [filter, setFilter] = useState<Filter>("all");
   const [rating, setRating] = useState<RateTarget | null>(null);
   const [adding, setAdding] = useState(false);
+  const [viewing, setViewing] = useState<MenuDish | null>(null);
 
   const rated = dishes.filter((d) => d.myRating);
   const visible = filter === "all" ? dishes : rated;
 
-  function openRating(d: Pick<MenuDish, "id" | "name"> & { myRating?: MenuDish["myRating"] }) {
+  function openRating(d: Pick<MenuDish, "id" | "name">) {
     const known = dishes.find((x) => x.id === d.id);
-    setRating({ id: d.id, name: d.name, myRating: known?.myRating ?? d.myRating ?? null });
+    setRating({ id: d.id, name: d.name, myRating: known?.myRating ?? null, myPhoto: known?.myPhoto ?? null });
   }
 
   function picked(d: DishSuggestion) {
@@ -88,6 +90,7 @@ export function RestaurantMenu({
         <DishList
           dishes={[...visible].sort((a, b) => b.myRating!.score - a.myRating!.score || a.name.localeCompare(b.name))}
           onRate={openRating}
+          onView={setViewing}
         />
       ) : (
         CATEGORIES.map((c) => ({ ...c, items: visible.filter((d) => d.category === c.key) }))
@@ -95,7 +98,7 @@ export function RestaurantMenu({
           .map((g) => (
             <div key={g.label}>
               <div className="text-terracotta mt-6 mb-1 font-serif text-lg italic">{g.label}</div>
-              <DishList dishes={g.items} onRate={openRating} />
+              <DishList dishes={g.items} onRate={openRating} onView={setViewing} />
             </div>
           ))
       )}
@@ -117,20 +120,45 @@ export function RestaurantMenu({
         onClose={() => setAdding(false)}
         onPicked={picked}
       />
+      <PhotoLightbox
+        photo={viewing?.myPhoto ?? null}
+        alt={viewing ? `Your photo of ${viewing.name}` : ""}
+        onClose={() => setViewing(null)}
+      />
       <RatingSheet dish={rating} restaurantName={restaurantName} open={rating !== null} onClose={() => setRating(null)} />
     </>
   );
 }
 
-function DishList({ dishes, onRate }: { dishes: MenuDish[]; onRate: (d: MenuDish) => void }) {
+function DishList({
+  dishes,
+  onRate,
+  onView,
+}: {
+  dishes: MenuDish[];
+  onRate: (d: MenuDish) => void;
+  onView: (d: MenuDish) => void;
+}) {
   return (
     <ul>
       {dishes.map((d) => (
         <li
           key={d.id}
-          className="border-line grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 border-b border-dashed py-4"
+          className="border-line flex items-center gap-3 border-b border-dashed py-4"
         >
-          <div className="min-w-0">
+          {/* Only dishes you photographed get a thumbnail; no placeholder otherwise. */}
+          {d.myPhoto && (
+            <button
+              type="button"
+              onClick={() => onView(d)}
+              aria-label={`View your photo of ${d.name}`}
+              className="shrink-0 self-start rounded-xl"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={d.myPhoto.thumbUrl} alt="" width={48} height={48} className="size-12 rounded-xl object-cover" />
+            </button>
+          )}
+          <div className="min-w-0 flex-1">
             <h3 className="text-[17px] font-semibold">
               {d.name}
               {d.hidden && <span className="text-muted ml-2 text-xs font-normal">· removed from shared menu</span>}
@@ -145,7 +173,7 @@ function DishList({ dishes, onRate }: { dishes: MenuDish[]; onRate: (d: MenuDish
               type="button"
               onClick={() => onRate(d)}
               aria-label={`Your score for ${d.name}: ${d.myRating.score}. Rate again`}
-              className="rounded-[10px]"
+              className="shrink-0 rounded-[10px]"
             >
               <ScoreBadge score={d.myRating.score} />
             </button>
@@ -154,7 +182,7 @@ function DishList({ dishes, onRate }: { dishes: MenuDish[]; onRate: (d: MenuDish
               type="button"
               onClick={() => onRate(d)}
               aria-label={`Rate ${d.name}`}
-              className="border-terracotta text-terracotta rounded-[10px] border border-dashed px-3 py-2.5 text-[13px] font-medium"
+              className="border-terracotta text-terracotta shrink-0 rounded-[10px] border border-dashed px-3 py-2.5 text-[13px] font-medium"
             >
               Rate
             </button>

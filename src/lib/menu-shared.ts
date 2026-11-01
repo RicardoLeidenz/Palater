@@ -12,6 +12,8 @@ export const CATEGORIES: { key: Category | null; label: string; singular: string
 
 export type MyRating = { score: number; note: string | null; createdAt: string };
 
+export type MyPhoto = { thumbUrl: string; fullUrl: string; width: number; height: number };
+
 export type MenuDish = {
   id: string;
   name: string;
@@ -19,6 +21,7 @@ export type MenuDish = {
   category: Category | null;
   hidden: boolean;
   myRating: MyRating | null;
+  myPhoto: MyPhoto | null;
 };
 
 export type DishSuggestion = {
