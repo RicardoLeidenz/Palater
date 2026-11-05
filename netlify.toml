@@ -1,0 +1,12 @@
+# Netlify sometimes detects this repo as plain TypeScript; pin the Next.js setup explicitly.
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  # Match CI (.github/workflows/ci.yml).
+  NODE_VERSION = "24"
+
+# Netlify's Next.js adapter: server rendering, server actions, proxy and images.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
