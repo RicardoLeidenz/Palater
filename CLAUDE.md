@@ -22,9 +22,12 @@ All 7 planned phases of v1 are built, tested, committed and pushed:
 6. Want-to-try, visited, profile
 7. Moderation, error states, README, CI
 
-**Pending on the owner's side, not code:**
-- Google OAuth credentials (owner will add them later; demo login works meanwhile).
-- Hosted Supabase and Vercel deployment.
+**Live demo (2026-11-05):** https://palater.netlify.app on Netlify, with hosted Supabase project
+`lolbzrdgcvbfqlhoawkw` and Google sign-in working. Netlify redeploys on every push to `main`.
+- `netlify.toml` pins the Next.js adapter and Node 24 and omits `OSM_CONTACT_EMAIL` from secrets
+  scanning, because `/privacy` shows it on purpose (the build fails otherwise).
+- `/privacy` is public (in `PUBLIC_PATHS` in `src/proxy.ts`) because Google's consent screen links to it.
+- New migrations need `npx supabase db push --linked` to reach production; CI doesn't do it.
 
 **Ideas for later:**
 - Menu-photo scanning with Claude vision was offered and **deferred**. Don't build it unless asked.

@@ -132,7 +132,8 @@ Supabase stack on every push.
 ## Deploying
 
 The recommended setup is **Supabase (hosted)** for the database, auth and storage, and
-**Vercel** for the Next.js app. Both deploy from this repository.
+**Vercel** or **Netlify** for the Next.js app. Both deploy from this repository. The live demo
+runs on Netlify (see [Netlify instead of Vercel](#netlify-instead-of-vercel)).
 
 ### 1. Supabase project
 
@@ -168,6 +169,18 @@ In Google Cloud Console → APIs & Services:
    `NEXT_PUBLIC_SITE_URL=https://your-domain`, `OSM_CONTACT_EMAIL`.
    Do **not** set `ENABLE_DEV_LOGIN`.
 3. Deploy, then add your custom domain and update the Supabase/Google URLs above to match.
+
+### Netlify instead of Vercel
+
+1. Import the repo at [app.netlify.com](https://app.netlify.com). `netlify.toml` sets the build
+   command, Node version and Next.js adapter, so leave the build settings as detected.
+2. Add the same environment variables as for Vercel. After the first deploy, set
+   `NEXT_PUBLIC_SITE_URL` to the real `*.netlify.app` URL and redeploy (it's baked in at build time).
+3. Under **Access & security → Visitor access**, turn site protection off, or visitors get a Netlify login page.
+4. In Google's consent screen **Branding**, use `https://your-domain/privacy` as the privacy policy link.
+
+`netlify.toml` excludes `OSM_CONTACT_EMAIL` from Netlify's secrets scanning because the privacy
+page displays it as the contact address.
 
 ### 4. Make yourself admin
 
