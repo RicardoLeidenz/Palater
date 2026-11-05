@@ -4,6 +4,8 @@ Save the restaurants you visit and rate the dishes you eat there. Restaurants an
 dish names are shared; **scores, comments, plate photos and want-to-try lists are
 private to each person**, enforced in the database, not just the UI.
 
+**Live demo: [palater.netlify.app](https://palater.netlify.app)**. Sign in with Google; anything you rate stays private to you.
+
 - **Stack:** Next.js 16 (App Router) · Supabase (Postgres, Auth, Storage) · Tailwind CSS 4
 - **Places:** OpenStreetMap via Photon (search, nearby) and Nominatim (cities, addresses, verified lookups)
 - **Photos:** resized in the browser, re-encoded with `sharp` on the server (all metadata, including GPS, stripped)
