@@ -6,6 +6,8 @@
 [build.environment]
   # Match CI (.github/workflows/ci.yml).
   NODE_VERSION = "24"
+  # The contact email is shown on /privacy on purpose; keep scanning every other secret.
+  SECRETS_SCAN_OMIT_KEYS = "OSM_CONTACT_EMAIL"
 
 # Netlify's Next.js adapter: server rendering, server actions, proxy and images.
 [[plugins]]
