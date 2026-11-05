@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { serverEnv } from "@/lib/env";
 import { safeNextPath } from "@/lib/safe-redirect";
 import { Logo } from "@/components/logo";
@@ -21,8 +22,8 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         Remember every <em className="text-plum">plate</em>.
       </h1>
       <p className="text-muted mb-8">
-        Save the restaurants you visit and rate the dishes you eat. Your scores, notes and photos
-        are yours alone. Nobody else can see them.
+        Save the restaurants you visit and rate the dishes you eat. Your scores, notes and photos are yours alone.
+        Nobody else can see them.
       </p>
 
       {error && (
@@ -34,6 +35,12 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
       <GoogleButton next={next} />
 
       {serverEnv().ENABLE_DEV_LOGIN && <DevLogin next={next} />}
+
+      <p className="text-muted mt-10 text-sm">
+        <Link href="/privacy" className="underline">
+          Privacy
+        </Link>
+      </p>
     </main>
   );
 }
